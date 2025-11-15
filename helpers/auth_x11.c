@@ -1306,8 +1306,14 @@ int Prompt(const char *msg, char **response, int echo) {
           BumpDisplayMarker(priv.pwlen, &priv.displaymarker,
                             &priv.last_keystroke);
           break;
-        case 0:       // Shouldn't happen.
         case '\033':  // Escape.
+          // Clear the input line (like Ctrl-U). User can still press ESC
+          // again or wait for timeout to cancel the prompt entirely.
+          priv.pwlen = 0;
+          BumpDisplayMarker(priv.pwlen, &priv.displaymarker,
+                            &priv.last_keystroke);
+          break;
+        case 0:  // Shouldn't happen.
           done = 1;
           break;
         case '\r':  // Return.

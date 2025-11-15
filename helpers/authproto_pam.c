@@ -44,11 +44,25 @@ int ConverseOne(const struct pam_message *msg, struct pam_response *resp) {
     case PAM_PROMPT_ECHO_OFF: {
       WritePacket(1, PTYPE_PROMPT_LIKE_PASSWORD, msg->msg);
       char type = ReadPacket(0, &resp->resp, 0);
+      if (type == PTYPE_RESPONSE_CANCELLED) {
+        // User pressed ESC or prompt timed out. Return PAM_ABORT to cleanly
+        // abort the authentication session. Returning PAM_CONV_ERR instead would
+        // cause some PAM modules to attempt authentication with empty input,
+        // which trips faillock and counts as a failed login attempt.
+        return PAM_ABORT;
+      }
       return type == PTYPE_RESPONSE_LIKE_PASSWORD ? PAM_SUCCESS : PAM_CONV_ERR;
     }
     case PAM_PROMPT_ECHO_ON: {
       WritePacket(1, PTYPE_PROMPT_LIKE_USERNAME, msg->msg);
       char type = ReadPacket(0, &resp->resp, 0);
+      if (type == PTYPE_RESPONSE_CANCELLED) {
+        // User pressed ESC or prompt timed out. Return PAM_ABORT to cleanly
+        // abort the authentication session. Returning PAM_CONV_ERR instead would
+        // cause some PAM modules to attempt authentication with empty input,
+        // which trips faillock and counts as a failed login attempt.
+        return PAM_ABORT;
+      }
       return type == PTYPE_RESPONSE_LIKE_USERNAME ? PAM_SUCCESS : PAM_CONV_ERR;
     }
     case PAM_ERROR_MSG:
